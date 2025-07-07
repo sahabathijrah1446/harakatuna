@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
+import OpenAI from "openai";
 
 // Mock translation result for demo
 const mockResult = {
@@ -20,15 +24,118 @@ const Dashboard = () => {
   const [result, setResult] = useState<typeof mockResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isProUser] = useState(false); // Mock user status
+  const [apiKey, setApiKey] = useState("");
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
+  // Load API key from localStorage on component mount
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem('sumopod_api_key');
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    } else {
+      setShowApiKeyInput(true);
+    }
+  }, []);
+
+  // Save API key to localStorage
+  const handleSaveApiKey = () => {
+    if (!apiKey.trim()) {
+      toast.error("Mohon masukkan API key yang valid");
+      return;
+    }
+    localStorage.setItem('sumopod_api_key', apiKey);
+    setShowApiKeyInput(false);
+    toast.success("API key berhasil disimpan");
+  };
+
+  // Process Arabic text using SumoPod API
   const handleProcess = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim()) {
+      toast.error("Mohon masukkan teks Arab terlebih dahulu");
+      return;
+    }
+
+    if (!apiKey.trim()) {
+      toast.error("Mohon masukkan SumoPod API key terlebih dahulu");
+      setShowApiKeyInput(true);
+      return;
+    }
     
     setIsProcessing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setResult(mockResult);
-    setIsProcessing(false);
+    
+    try {
+      // Initialize OpenAI client with SumoPod configuration
+      const openai = new OpenAI({
+        apiKey: apiKey,
+        baseURL: 'https://ai.sumopod.com/v1',
+        dangerouslyAllowBrowser: true
+      });
+
+      const prompt = `Analisis teks Arab berikut dan berikan:
+1. Teks dengan harakat lengkap
+2. Transliterasi Latin
+3. Terjemahan dalam Bahasa Indonesia  
+4. Penjelasan grammatical (Nahwu & Sharaf)
+
+Teks Arab: ${inputText}
+
+Format response dalam JSON dengan struktur:
+{
+  "harakat": "teks dengan harakat",
+  "transliteration": "transliterasi latin", 
+  "translation": "terjemahan indonesia",
+  "explanation": "penjelasan nahwu sharaf"
+}`;
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'Anda adalah ahli bahasa Arab yang membantu menganalisis teks Arab dengan memberikan harakat, transliterasi, terjemahan, dan penjelasan grammatical.' 
+          },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 1000,
+        temperature: 0.3
+      });
+
+      const content = response.choices[0].message.content;
+      
+      try {
+        // Try to parse JSON response
+        const jsonMatch = content?.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsedResult = JSON.parse(jsonMatch[0]);
+          setResult(parsedResult);
+          toast.success("Teks berhasil dianalisis!");
+        } else {
+          // Fallback if response is not in JSON format  
+          setResult({
+            harakat: inputText, // Keep original if no harakat provided
+            transliteration: "Transliterasi tidak tersedia",
+            translation: content || "Terjemahan tidak tersedia", 
+            explanation: "Penjelasan grammatical tidak tersedia"
+          });
+          toast.success("Teks berhasil diproses!");
+        }
+      } catch (parseError) {
+        // If JSON parsing fails, use the raw response
+        setResult({
+          harakat: inputText,
+          transliteration: "Transliterasi tidak tersedia", 
+          translation: content || "Terjemahan tidak tersedia",
+          explanation: "Penjelasan grammatical tidak tersedia"
+        });
+        toast.success("Teks berhasil diproses!");
+      }
+      
+    } catch (error: any) {
+      console.error('SumoPod API Error:', error);
+      toast.error(`Error: ${error.message || 'Gagal memproses teks. Periksa API key dan koneksi internet.'}`);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleOCRUpload = () => {
@@ -50,6 +157,67 @@ const Dashboard = () => {
             Masukkan teks Arab dan dapatkan harakat, transliterasi, terjemahan, serta penjelasan grammatical
           </p>
         </div>
+
+        {/* API Key Configuration */}
+        {showApiKeyInput && (
+          <Card className="shadow-soft mb-8 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>🔑</span>
+                <span>Konfigurasi SumoPod API</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="api-key">API Key SumoPod</Label>
+                <Input
+                  id="api-key"
+                  type="password"
+                  placeholder="Masukkan SumoPod API key Anda..."
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="font-mono"
+                />
+                <p className="text-sm text-muted-foreground">
+                  API key akan disimpan secara lokal di browser Anda untuk keamanan
+                </p>
+              </div>
+              <div className="flex space-x-2">
+                <Button onClick={handleSaveApiKey} variant="hero">
+                  💾 Simpan API Key
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowApiKeyInput(false)}
+                  disabled={!localStorage.getItem('sumopod_api_key')}
+                >
+                  Batal
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* API Key Status */}
+        {!showApiKeyInput && apiKey && (
+          <Card className="shadow-soft mb-8 bg-primary-soft/50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span>✅</span>
+                  <span className="text-sm font-medium">SumoPod API terkonfigurasi</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowApiKeyInput(true)}
+                >
+                  🔧 Ubah API Key
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Input Section */}
