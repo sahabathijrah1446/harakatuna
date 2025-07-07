@@ -282,32 +282,6 @@ Format response dalam JSON dengan struktur:
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Status Card */}
-            <Card className="shadow-soft">
-              <CardHeader>
-                <CardTitle className="text-center">Status Akun</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <div className="w-16 h-16 bg-gradient-soft rounded-full flex items-center justify-center mx-auto">
-                  <span className="text-2xl">{isProUser ? "👑" : "🆓"}</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold">{isProUser ? "Pro User" : "Free User"}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {isProUser 
-                      ? "Akses semua fitur premium" 
-                      : "Input manual & fitur dasar"
-                    }
-                  </p>
-                </div>
-                {!isProUser && (
-                  <Button variant="premium" size="sm" asChild>
-                    <Link to="/pro">Upgrade ke Pro</Link>
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-
             {/* Quick Guide */}
             <Card className="shadow-soft">
               <CardHeader>
