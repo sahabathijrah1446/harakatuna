@@ -20,7 +20,7 @@ const FreeUserApp = () => {
   const [inputText, setInputText] = useState("");
   const [result, setResult] = useState<typeof mockResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [dailyUsage] = useState({ used: 3, limit: 5 });
+  const [dailyUsage] = useState({ used: 3, limit: 25 });
 
   const handleProcess = async () => {
     if (!inputText.trim()) {
