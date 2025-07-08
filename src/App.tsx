@@ -4,7 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import UserApp from "./pages/UserApp";
+import FreeUserApp from "./pages/FreeUserApp";
+import ProUserApp from "./pages/ProUserApp";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProPlan from "./pages/ProPlan";
 import NotFound from "./pages/NotFound";
@@ -19,7 +20,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/app" element={<UserApp />} />
+          <Route path="/free" element={<FreeUserApp />} />
+          <Route path="/pro-app" element={<ProUserApp />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/pro" element={<ProPlan />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

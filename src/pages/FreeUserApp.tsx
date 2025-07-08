@@ -16,16 +16,20 @@ const mockResult = {
   explanation: "Kalimat Basmalah terdiri dari: بِسْمِ (bi ismi) - dengan nama, اللَّهِ (Allah) - nama Allah, الرَّحْمَن (ar-rahman) - Yang Maha Pengasih, الرَّحِيم (ar-raheem) - Yang Maha Penyayang."
 };
 
-const UserApp = () => {
+const FreeUserApp = () => {
   const [inputText, setInputText] = useState("");
   const [result, setResult] = useState<typeof mockResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isProUser] = useState(false); // Mock user status
+  const [dailyUsage] = useState({ used: 3, limit: 5 });
 
-  // Simple process function for demo
   const handleProcess = async () => {
     if (!inputText.trim()) {
       toast.error("Mohon masukkan teks Arab terlebih dahulu");
+      return;
+    }
+
+    if (dailyUsage.used >= dailyUsage.limit) {
+      toast.error("Batas harian tercapai. Upgrade ke Pro untuk unlimited akses!");
       return;
     }
     
@@ -40,7 +44,7 @@ const UserApp = () => {
   };
 
   const handleOCRUpload = () => {
-    alert("Fitur OCR hanya tersedia untuk pengguna Pro. Upgrade sekarang!");
+    toast.error("Fitur OCR hanya tersedia untuk pengguna Pro. Upgrade sekarang!");
   };
 
   return (
@@ -50,12 +54,37 @@ const UserApp = () => {
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+              🆓 Free User
+            </Badge>
+          </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
             <span className="text-primary">Harakatuna</span> - Analisis Teks Arab
           </h1>
           <p className="text-lg text-muted-foreground">
-            Masukkan teks Arab dan dapatkan harakat, transliterasi, dan terjemahan
+            Analisis dasar teks Arab dengan batasan {dailyUsage.limit} kali per hari
           </p>
+        </div>
+
+        {/* Usage Limit */}
+        <div className="max-w-md mx-auto mb-8">
+          <Card className="shadow-soft border-orange-200 bg-orange-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Penggunaan Hari Ini</span>
+                <span className="text-sm font-bold text-orange-600">
+                  {dailyUsage.used}/{dailyUsage.limit}
+                </span>
+              </div>
+              <div className="w-full bg-orange-200 rounded-full h-2 mt-2">
+                <div 
+                  className="bg-orange-500 h-2 rounded-full transition-all"
+                  style={{ width: `${(dailyUsage.used / dailyUsage.limit) * 100}%` }}
+                ></div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="max-w-4xl mx-auto space-y-8">
@@ -77,40 +106,40 @@ const UserApp = () => {
               />
               <Button 
                 onClick={handleProcess}
-                disabled={!inputText.trim() || isProcessing}
+                disabled={!inputText.trim() || isProcessing || dailyUsage.used >= dailyUsage.limit}
                 variant="hero"
                 size="lg"
                 className="w-full"
               >
-                {isProcessing ? "Sedang Memproses..." : "🔍 Analisis Teks"}
+                {isProcessing ? "Sedang Memproses..." : 
+                 dailyUsage.used >= dailyUsage.limit ? "Batas Harian Tercapai" :
+                 "🔍 Analisis Teks"}
               </Button>
             </CardContent>
           </Card>
 
-          {/* OCR Option */}
-          <Card className="shadow-soft border-dashed border-2 border-muted">
+          {/* OCR Disabled for Free */}
+          <Card className="shadow-soft border-dashed border-2 border-gray-300 opacity-75">
             <CardContent className="p-6 text-center">
               <div className="space-y-4">
-                <div className="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center mx-auto shadow-soft">
-                  <span className="text-2xl">📷</span>
+                <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mx-auto">
+                  <span className="text-2xl text-gray-400">📷</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Upload Gambar Teks Arab</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Ekstrak teks dari gambar dengan teknologi OCR
+                  <h3 className="font-semibold text-gray-500">Upload Gambar Teks Arab</h3>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Fitur tidak tersedia untuk pengguna Free
                   </p>
                 </div>
-                {!isProUser && (
-                  <Badge variant="outline" className="bg-primary-soft text-primary border-primary/30">
-                    Fitur Pro
-                  </Badge>
-                )}
+                <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
+                  🔒 Fitur Pro
+                </Badge>
                 <Button 
                   onClick={handleOCRUpload}
-                  variant={isProUser ? "islamic" : "outline"}
-                  disabled={!isProUser}
+                  variant="outline"
+                  disabled
                 >
-                  {isProUser ? "📷 Upload Gambar" : "🔒 Upgrade ke Pro"}
+                  Upload Gambar
                 </Button>
               </div>
             </CardContent>
@@ -169,17 +198,20 @@ const UserApp = () => {
                   </CardContent>
                 </Card>
 
-                {/* Explanation */}
+                {/* Limited Explanation for Free */}
                 <Card className="shadow-soft">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
                       <span>📚</span>
-                      <span>Penjelasan</span>
+                      <span>Penjelasan Dasar</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm leading-relaxed p-4 bg-muted rounded-lg">
-                      {result.explanation}
+                      {result.explanation.substring(0, 100)}...
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        💡 Penjelasan lengkap tersedia untuk pengguna Pro
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -187,25 +219,26 @@ const UserApp = () => {
             </div>
           )}
 
-          {/* Upgrade Prompt for Free Users */}
-          {!isProUser && (
-            <Card className="shadow-soft border-primary/20 bg-gradient-to-r from-primary-soft to-primary-soft/50">
-              <CardContent className="p-6 text-center">
-                <div className="space-y-4">
-                  <div className="text-2xl">👑</div>
-                  <div>
-                    <h3 className="font-bold text-lg text-primary">Upgrade ke Pro</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Dapatkan fitur OCR, analisis lebih detail, dan akses unlimited
-                    </p>
-                  </div>
-                  <Button variant="premium" asChild>
-                    <Link to="/pro">Lihat Paket Pro</Link>
-                  </Button>
+          {/* Upgrade Prompt */}
+          <Card className="shadow-soft border-primary/20 bg-gradient-to-r from-primary-soft to-primary-soft/50">
+            <CardContent className="p-6 text-center">
+              <div className="space-y-4">
+                <div className="text-2xl">👑</div>
+                <div>
+                  <h3 className="font-bold text-lg text-primary">Upgrade ke Pro</h3>
+                  <p className="text-sm text-muted-foreground">
+                    • Unlimited analisis teks<br/>
+                    • Fitur OCR untuk gambar<br/>
+                    • Penjelasan nahwu lengkap<br/>
+                    • Priority support
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <Button variant="premium" asChild>
+                  <Link to="/pro">Upgrade Sekarang</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </main>
 
@@ -214,4 +247,4 @@ const UserApp = () => {
   );
 };
 
-export default UserApp;
+export default FreeUserApp;
