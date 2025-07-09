@@ -18,6 +18,21 @@ const AdminDashboard = () => {
     apiCalls: 45672
   });
 
+  // Token Management State
+  const [tokenSettings, setTokenSettings] = useState({
+    freeUserModel: "gpt-4.1-mini-2025-04-14",
+    proUserModel: "gpt-4.1-2025-04-14",
+    freeUserTokenLimit: 1000,
+    proUserTokenLimit: 50000,
+    currentMonthUsage: {
+      freeUsers: 25430,
+      proUsers: 156780,
+      totalCost: 45.67
+    }
+  });
+
+  const [showTokenSettings, setShowTokenSettings] = useState(false);
+
   // Load API key from localStorage on component mount
   useEffect(() => {
     const savedApiKey = localStorage.getItem('sumopod_api_key');
@@ -38,6 +53,21 @@ const AdminDashboard = () => {
     setShowApiKeyInput(false);
     toast.success("API key berhasil disimpan");
   };
+
+  // Save token settings
+  const handleSaveTokenSettings = () => {
+    localStorage.setItem('harakatuna_token_settings', JSON.stringify(tokenSettings));
+    setShowTokenSettings(false);
+    toast.success("Pengaturan token berhasil disimpan");
+  };
+
+  // Load token settings on mount
+  useEffect(() => {
+    const savedTokenSettings = localStorage.getItem('harakatuna_token_settings');
+    if (savedTokenSettings) {
+      setTokenSettings(JSON.parse(savedTokenSettings));
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -177,6 +207,147 @@ const AdminDashboard = () => {
                   📈 Normal
                 </Badge>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Token Management Section */}
+        <div className="grid lg:grid-cols-2 gap-8 mt-8">
+          {/* Token Usage Overview */}
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>🪙</span>
+                <span>Token Usage Bulan Ini</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                  <div>
+                    <div className="text-sm font-medium">Free Users</div>
+                    <div className="text-xs text-muted-foreground">Model: {tokenSettings.freeUserModel}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-blue-600">
+                      {tokenSettings.currentMonthUsage.freeUsers.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground">tokens</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                  <div>
+                    <div className="text-sm font-medium">Pro Users</div>
+                    <div className="text-xs text-muted-foreground">Model: {tokenSettings.proUserModel}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-purple-600">
+                      {tokenSettings.currentMonthUsage.proUsers.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground">tokens</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                  <div className="text-sm font-medium">Total Biaya</div>
+                  <div className="text-lg font-bold text-green-600">
+                    ${tokenSettings.currentMonthUsage.totalCost}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Token Configuration */}
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>⚙️</span>
+                <span>Konfigurasi Token & Model</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!showTokenSettings ? (
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <span className="text-sm">Free User Limit</span>
+                      <span className="font-medium">{tokenSettings.freeUserTokenLimit} tokens</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <span className="text-sm">Pro User Limit</span>
+                      <span className="font-medium">{tokenSettings.proUserTokenLimit} tokens</span>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowTokenSettings(true)}
+                    className="w-full"
+                  >
+                    🔧 Ubah Konfigurasi
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label>Model untuk Free Users</Label>
+                      <select 
+                        className="w-full p-2 border rounded-md"
+                        value={tokenSettings.freeUserModel}
+                        onChange={(e) => setTokenSettings({...tokenSettings, freeUserModel: e.target.value})}
+                      >
+                        <option value="gpt-4.1-mini-2025-04-14">GPT-4.1 Mini (Cepat & Murah)</option>
+                        <option value="gpt-4.1-2025-04-14">GPT-4.1 (Standard)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Model untuk Pro Users</Label>
+                      <select 
+                        className="w-full p-2 border rounded-md"
+                        value={tokenSettings.proUserModel}
+                        onChange={(e) => setTokenSettings({...tokenSettings, proUserModel: e.target.value})}
+                      >
+                        <option value="gpt-4.1-2025-04-14">GPT-4.1 (Standard)</option>
+                        <option value="o3-2025-04-16">O3 (Reasoning Model)</option>
+                        <option value="o4-mini-2025-04-16">O4 Mini (Fast Reasoning)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Token Limit Free Users</Label>
+                      <Input
+                        type="number"
+                        value={tokenSettings.freeUserTokenLimit}
+                        onChange={(e) => setTokenSettings({...tokenSettings, freeUserTokenLimit: parseInt(e.target.value)})}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Token Limit Pro Users</Label>
+                      <Input
+                        type="number"
+                        value={tokenSettings.proUserTokenLimit}
+                        onChange={(e) => setTokenSettings({...tokenSettings, proUserTokenLimit: parseInt(e.target.value)})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button onClick={handleSaveTokenSettings} variant="hero">
+                      💾 Simpan Konfigurasi
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowTokenSettings(false)}
+                    >
+                      Batal
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
