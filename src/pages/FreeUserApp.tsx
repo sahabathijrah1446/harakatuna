@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,20 +8,30 @@ import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
-// Mock translation result for demo
-const mockResult = {
-  harakat: "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
-  transliteration: "Bismillahi ar-rahmani ar-raheem",
-  translation: "Dengan nama Allah Yang Maha Pengasih lagi Maha Penyayang",
-  explanation: "Kalimat Basmalah terdiri dari: بِسْمِ (bi ismi) - dengan nama, اللَّهِ (Allah) - nama Allah, الرَّحْمَن (ar-rahman) - Yang Maha Pengasih, الرَّحِيم (ar-raheem) - Yang Maha Penyayang."
-};
+// Type for Free analysis result
+interface FreeAnalysisResult {
+  harakat: string;
+  transliteration: string;
+  translation: string;
+  explanation: string;
+}
 
 const FreeUserApp = () => {
   const [inputText, setInputText] = useState("");
-  const [result, setResult] = useState<typeof mockResult | null>(null);
+  const [result, setResult] = useState<FreeAnalysisResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [dailyUsage] = useState({ used: 3, limit: 25 });
+  const [dailyUsage, setDailyUsage] = useState({ used: 3, limit: 25 });
+  const [apiKey, setApiKey] = useState("");
 
+  // Load API key and token settings
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem('sumopod_api_key');
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
+  }, []);
+
+  // Process Arabic text using SumoPod API (Free version with GPT-3.5)
   const handleProcess = async () => {
     if (!inputText.trim()) {
       toast.error("Mohon masukkan teks Arab terlebih dahulu");
@@ -32,15 +42,81 @@ const FreeUserApp = () => {
       toast.error("Batas harian tercapai. Upgrade ke Pro untuk unlimited akses!");
       return;
     }
+
+    if (!apiKey.trim()) {
+      toast.error("API key tidak ditemukan. Hubungi admin.");
+      return;
+    }
     
     setIsProcessing(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setResult(mockResult);
+    try {
+      // Initialize OpenAI client with SumoPod configuration
+      const OpenAI = (await import('openai')).default;
+      const openai = new OpenAI({
+        apiKey: apiKey,
+        baseURL: 'https://ai.sumopod.com/v1',
+        dangerouslyAllowBrowser: true
+      });
+
+      const prompt = `Analisis dasar teks Arab berikut untuk pengguna free:
+"${inputText}"
+
+Berikan output dalam format JSON:
+{
+  "harakat": "teks dengan harakat",
+  "transliteration": "transliterasi Latin",
+  "translation": "terjemahan dalam Bahasa Indonesia",
+  "explanation": "penjelasan singkat (maksimal 2 kalimat)"
+}`;
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'Anda memberikan analisis dasar teks Arab untuk pengguna free dengan penjelasan singkat.' 
+          },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 500,
+        temperature: 0.3
+      });
+
+      const content = response.choices[0].message.content;
+      
+      try {
+        const jsonMatch = content?.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsedResult = JSON.parse(jsonMatch[0]);
+          setResult(parsedResult);
+          setDailyUsage(prev => ({ ...prev, used: prev.used + 1 }));
+          toast.success("Analisis berhasil!");
+        } else {
+          setResult({
+            harakat: inputText,
+            transliteration: "Transliterasi tidak tersedia",
+            translation: content || "Terjemahan tidak tersedia",
+            explanation: "Penjelasan tidak tersedia"
+          });
+          toast.success("Teks berhasil diproses!");
+        }
+      } catch (parseError) {
+        setResult({
+          harakat: inputText,
+          transliteration: "Transliterasi tidak tersedia",
+          translation: content || "Terjemahan tidak tersedia", 
+          explanation: "Penjelasan tidak tersedia"
+        });
+        toast.success("Teks berhasil diproses!");
+      }
+      
+    } catch (error: any) {
+      console.error('SumoPod API Error:', error);
+      toast.error(`Error: ${error.message || 'Gagal memproses teks.'}`);
+    } finally {
       setIsProcessing(false);
-      toast.success("Teks berhasil diproses!");
-    }, 2000);
+    }
   };
 
   const handleOCRUpload = () => {
@@ -208,7 +284,7 @@ const FreeUserApp = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm leading-relaxed p-4 bg-muted rounded-lg">
-                      {result.explanation.substring(0, 100)}...
+                      {result.explanation ? result.explanation.substring(0, 100) + "..." : "Penjelasan tidak tersedia"}
                       <div className="mt-2 text-xs text-muted-foreground">
                         💡 Penjelasan lengkap tersedia untuk pengguna Pro
                       </div>

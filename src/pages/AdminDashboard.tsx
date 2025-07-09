@@ -20,9 +20,9 @@ const AdminDashboard = () => {
 
   // Token Management State
   const [tokenSettings, setTokenSettings] = useState({
-    freeUserModel: "gpt-4.1-mini-2025-04-14",
-    proUserModel: "gpt-4.1-2025-04-14",
-    freeUserTokenLimit: 1000,
+    freeUserModel: "gpt-3.5-turbo",
+    proUserModel: "gpt-4.1-2025-04-14", 
+    freeUserTokenLimit: 500,
     proUserTokenLimit: 50000,
     currentMonthUsage: {
       freeUsers: 25430,
@@ -298,6 +298,7 @@ const AdminDashboard = () => {
                         value={tokenSettings.freeUserModel}
                         onChange={(e) => setTokenSettings({...tokenSettings, freeUserModel: e.target.value})}
                       >
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Free Users)</option>
                         <option value="gpt-4.1-mini-2025-04-14">GPT-4.1 Mini (Cepat & Murah)</option>
                         <option value="gpt-4.1-2025-04-14">GPT-4.1 (Standard)</option>
                       </select>

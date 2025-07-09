@@ -85,7 +85,7 @@ Berikan output dalam format JSON dengan struktur berikut:
 Pastikan analisis i'rab mencakup setiap kata dengan detail posisi gramatikal, tanda i'rab, dan alasan yang jelas.`;
 
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           { 
             role: 'system', 
