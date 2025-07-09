@@ -3,22 +3,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
 import OpenAI from "openai";
 
-// Mock translation result for demo
-const mockResult = {
-  harakat: "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
-  transliteration: "Bismillahi ar-rahmani ar-raheem",
-  translation: "Dengan nama Allah Yang Maha Pengasih lagi Maha Penyayang",
-  explanation: "Kalimat Basmalah terdiri dari: بِسْمِ (bi ismi) - dengan nama, اللَّهِ (Allah) - nama Allah, الرَّحْمَن (ar-rahman) - Yang Maha Pengasih, الرَّحِيم (ar-raheem) - Yang Maha Penyayang. Struktur nahwu: بِسْمِ adalah jar majrur dengan huruf jar ب, اللَّه adalah mudhaf ilaih majrur. Kalimat ini merupakan kalimat nominal (jumlah ismiyyah) yang diawali dengan jar majrur yang berfungsi sebagai khabar muqaddam."
-};
+// Type for Pro analysis result
+interface ProAnalysisResult {
+  harakat: string;
+  transliteration: string;
+  translation: string;
+  irab_table?: Array<{
+    kata: string;
+    irab: string;
+    penjelasan: string;
+  }>;
+  sharaf_analysis?: string;
+  nahwu_explanation?: string;
+  explanation?: string; // fallback for backward compatibility
+}
 
 const ProUserApp = () => {
   const [inputText, setInputText] = useState("");
-  const [result, setResult] = useState<typeof mockResult | null>(null);
+  const [result, setResult] = useState<ProAnalysisResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [monthlyUsage] = useState({ used: 847, limit: 10000 });
   const [apiKey, setApiKey] = useState("");
@@ -53,25 +61,28 @@ const ProUserApp = () => {
         dangerouslyAllowBrowser: true
       });
 
-      const prompt = `Analisis lengkap teks Arab berikut dan berikan:
-1. Teks dengan harakat lengkap dan akurat
-2. Transliterasi Latin yang presisi
-3. Terjemahan dalam Bahasa Indonesia yang natural
-4. Penjelasan grammatical lengkap (Nahwu & Sharaf) termasuk:
-   - Analisis i'rab setiap kata
-   - Struktur kalimat (jumlah ismiyyah/fi'liyyah)
-   - Kaidah nahwu yang berlaku
-   - Fungsi gramatikal setiap unsur
+      const prompt = `Anda adalah ahli Nahwu & Sharaf tingkat tinggi. Tugas Anda adalah menganalisis teks Arab dengan memberikan i'rab untuk setiap kata, menyebutkan posisi gramatikalnya, tandanya (manshub, majrur, marfu'), dan alasannya.
 
-Teks Arab: ${inputText}
+Analisis lengkap teks Arab berikut:
+"${inputText}"
 
-Format response dalam JSON dengan struktur:
+Berikan output dalam format JSON dengan struktur berikut:
 {
-  "harakat": "teks dengan harakat",
-  "transliteration": "transliterasi latin", 
-  "translation": "terjemahan indonesia",
-  "explanation": "penjelasan nahwu sharaf lengkap"
-}`;
+  "harakat": "teks dengan harakat lengkap dan akurat",
+  "transliteration": "transliterasi Latin yang presisi",
+  "translation": "terjemahan dalam Bahasa Indonesia yang natural",
+  "irab_table": [
+    {
+      "kata": "kata dalam Arab",
+      "irab": "posisi i'rab lengkap",
+      "penjelasan": "alasan mengapa kata tersebut mendapat i'rab ini"
+    }
+  ],
+  "sharaf_analysis": "analisis morfologi (sharaf) kata-kata penting",
+  "nahwu_explanation": "penjelasan struktur kalimat, kaidah nahwu yang berlaku, dan fungsi gramatikal"
+}
+
+Pastikan analisis i'rab mencakup setiap kata dengan detail posisi gramatikal, tanda i'rab, dan alasan yang jelas.`;
 
       const response = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -281,69 +292,157 @@ Format response dalam JSON dengan struktur:
                 ✨ Hasil Analisis Lengkap
               </h2>
               
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Harakat */}
-                <Card className="shadow-soft">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <span>📖</span>
-                      <span>Teks dengan Harakat</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl text-right font-arabic leading-relaxed p-4 bg-primary-soft rounded-lg">
-                      {result.harakat}
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="space-y-6">
+                {/* Basic Results Grid */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Harakat */}
+                  <Card className="shadow-soft">
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <span>📖</span>
+                        <span>Teks dengan Harakat</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl text-right font-arabic leading-relaxed p-4 bg-primary-soft rounded-lg">
+                        {result.harakat}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                {/* Transliteration */}
-                <Card className="shadow-soft">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <span>🔤</span>
-                      <span>Transliterasi</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-lg italic p-4 bg-secondary rounded-lg">
-                      {result.transliteration}
-                    </div>
-                  </CardContent>
-                </Card>
+                  {/* Transliteration */}
+                  <Card className="shadow-soft">
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <span>🔤</span>
+                        <span>Transliterasi</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-lg italic p-4 bg-secondary rounded-lg">
+                        {result.transliteration}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                {/* Translation */}
-                <Card className="shadow-soft">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <span>🌏</span>
-                      <span>Terjemahan</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-lg p-4 bg-accent rounded-lg">
-                      {result.translation}
-                    </div>
-                  </CardContent>
-                </Card>
+                  {/* Translation */}
+                  <Card className="shadow-soft md:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <span>🌏</span>
+                        <span>Terjemahan</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-lg p-4 bg-accent rounded-lg">
+                        {result.translation}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
 
-                {/* Full Explanation - Pro Feature */}
-                <Card className="shadow-soft border-primary/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <span>📚</span>
-                      <span>Analisis Nahwu & Sharaf Lengkap</span>
-                      <Badge variant="outline" className="bg-primary-soft text-primary text-xs">
-                        Pro
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm leading-relaxed p-4 bg-muted rounded-lg">
-                      {result.explanation}
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* I'rab Table - Pro Feature */}
+                {result.irab_table && result.irab_table.length > 0 && (
+                  <Card className="shadow-soft border-primary/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <span>📋</span>
+                        <span>Tabel I'rab</span>
+                        <Badge variant="outline" className="bg-primary-soft text-primary text-xs">
+                          Pro
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-right font-arabic">Kata</TableHead>
+                              <TableHead>I'rab</TableHead>
+                              <TableHead>Penjelasan</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {result.irab_table.map((item, index) => (
+                              <TableRow key={index}>
+                                <TableCell className="text-right font-arabic text-lg">
+                                  {item.kata}
+                                </TableCell>
+                                <TableCell className="font-medium text-primary">
+                                  {item.irab}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {item.penjelasan}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Sharaf Analysis - Pro Feature */}
+                {result.sharaf_analysis && (
+                  <Card className="shadow-soft border-primary/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <span>🔍</span>
+                        <span>Analisis Sharaf (Morfologi)</span>
+                        <Badge variant="outline" className="bg-primary-soft text-primary text-xs">
+                          Pro
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-sm leading-relaxed p-4 bg-muted rounded-lg">
+                        {result.sharaf_analysis}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Nahwu Explanation - Pro Feature */}
+                {result.nahwu_explanation && (
+                  <Card className="shadow-soft border-primary/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <span>📚</span>
+                        <span>Penjelasan Struktur Nahwu</span>
+                        <Badge variant="outline" className="bg-primary-soft text-primary text-xs">
+                          Pro
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-sm leading-relaxed p-4 bg-muted rounded-lg">
+                        {result.nahwu_explanation}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Fallback for old format */}
+                {result.explanation && !result.nahwu_explanation && !result.sharaf_analysis && (
+                  <Card className="shadow-soft border-primary/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center space-x-2">
+                        <span>📚</span>
+                        <span>Analisis Nahwu & Sharaf</span>
+                        <Badge variant="outline" className="bg-primary-soft text-primary text-xs">
+                          Pro
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-sm leading-relaxed p-4 bg-muted rounded-lg">
+                        {result.explanation}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           )}
