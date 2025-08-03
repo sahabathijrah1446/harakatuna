@@ -1,8 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import AuthModal from "./AuthModal";
 
 const Navbar = () => {
   const location = useLocation();
+  const { user, profile, signOut } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
   
@@ -50,13 +55,40 @@ const Navbar = () => {
           
           {/* Action Buttons */}
           <div className="flex items-center space-x-3">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/dashboard">Mulai Gratis</Link>
-            </Button>
-            <Button variant="hero" size="sm" asChild>
-              <Link to="/pro">Upgrade Pro</Link>
-            </Button>
+            {user ? (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  Halo, {profile?.display_name || user.email}
+                </span>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+                {profile?.plan_type === 'free' && (
+                  <Button variant="hero" size="sm" asChild>
+                    <Link to="/pro">Upgrade Pro</Link>
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={signOut}>
+                  Keluar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setAuthModalOpen(true)}>
+                  Masuk
+                </Button>
+                <Button variant="hero" size="sm" onClick={() => setAuthModalOpen(true)}>
+                  Daftar Gratis
+                </Button>
+              </>
+            )}
           </div>
+          
+          <AuthModal 
+            isOpen={authModalOpen}
+            onClose={() => setAuthModalOpen(false)}
+            onSuccess={() => setAuthModalOpen(false)}
+          />
         </div>
       </div>
     </nav>
