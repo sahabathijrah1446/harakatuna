@@ -11,6 +11,8 @@ import { toast } from "sonner";
 const AdminDashboard = () => {
   const [apiKey, setApiKey] = useState("");
   const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [xenditApiKey, setXenditApiKey] = useState("");
+  const [showXenditApiKeyInput, setShowXenditApiKeyInput] = useState(false);
   const [stats] = useState({
     totalUsers: 1250,
     activeUsers: 890,
@@ -43,6 +45,16 @@ const AdminDashboard = () => {
     }
   }, []);
 
+  // Load Xendit API key from localStorage on component mount
+  useEffect(() => {
+    const savedXenditApiKey = localStorage.getItem('xendit_api_key');
+    if (savedXenditApiKey) {
+      setXenditApiKey(savedXenditApiKey);
+    } else {
+      setShowXenditApiKeyInput(true);
+    }
+  }, []);
+
   // Save API key to localStorage
   const handleSaveApiKey = () => {
     if (!apiKey.trim()) {
@@ -52,6 +64,17 @@ const AdminDashboard = () => {
     localStorage.setItem('sumopod_api_key', apiKey);
     setShowApiKeyInput(false);
     toast.success("API key berhasil disimpan");
+  };
+
+  // Save Xendit API key to localStorage
+  const handleSaveXenditApiKey = () => {
+    if (!xenditApiKey.trim()) {
+      toast.error("Mohon masukkan Xendit API key yang valid");
+      return;
+    }
+    localStorage.setItem('xendit_api_key', xenditApiKey);
+    setShowXenditApiKeyInput(false);
+    toast.success("Xendit API key berhasil disimpan");
   };
 
   // Save token settings
@@ -207,6 +230,87 @@ const AdminDashboard = () => {
                   📈 Normal
                 </Badge>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Xendit Payment Configuration */}
+        <div className="grid lg:grid-cols-1 gap-8 mt-8">
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>💳</span>
+                <span>Konfigurasi Xendit Payment</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!showXenditApiKeyInput && xenditApiKey ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <span>✅</span>
+                      <span className="text-sm font-medium">Xendit API Key terkonfigurasi</span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowXenditApiKeyInput(true)}
+                    >
+                      🔧 Ubah
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <div className="text-sm font-medium text-blue-800">Payment Method</div>
+                      <div className="text-xs text-blue-600">E-wallet (Gopay)</div>
+                    </div>
+                    <div className="p-3 bg-purple-50 rounded-lg">
+                      <div className="text-sm font-medium text-purple-800">Pro Plan Price</div>
+                      <div className="text-xs text-purple-600">Rp 50.000/bulan</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="xendit-api-key">Xendit API Key</Label>
+                    <Input
+                      id="xendit-api-key"
+                      type="password"
+                      placeholder="Masukkan Xendit API key..."
+                      value={xenditApiKey}
+                      onChange={(e) => setXenditApiKey(e.target.value)}
+                      className="font-mono"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      API key untuk integrasi pembayaran Xendit (Gopay e-wallet)
+                    </p>
+                  </div>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="text-sm text-yellow-800">
+                      <strong>Setup Xendit Account:</strong>
+                      <ol className="list-decimal list-inside mt-2 space-y-1">
+                        <li>Daftar akun Xendit di <a href="https://xendit.co/id" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">xendit.co/id</a></li>
+                        <li>Verifikasi akun business Anda</li>
+                        <li>Setup e-wallet Gopay di dashboard Xendit</li>
+                        <li>Dapatkan API key dari Settings → API Keys</li>
+                      </ol>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button onClick={handleSaveXenditApiKey} variant="hero">
+                      💾 Simpan Xendit API Key
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowXenditApiKeyInput(false)}
+                      disabled={!localStorage.getItem('xendit_api_key')}
+                    >
+                      Batal
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
