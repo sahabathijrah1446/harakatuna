@@ -33,7 +33,7 @@ export const useSubscriptionGuard = () => {
       // Get latest profile data
       const { data: latestProfile, error } = await supabase
         .from('profiles')
-        .select('plan_type, subscription_end_date, payment_status')
+        .select('*')
         .eq('user_id', user.id)
         .single();
 
@@ -43,10 +43,10 @@ export const useSubscriptionGuard = () => {
       }
 
       const now = new Date();
-      const endDate = latestProfile.subscription_end_date ? new Date(latestProfile.subscription_end_date) : null;
+      const endDate = (latestProfile as any).subscription_end_date ? new Date((latestProfile as any).subscription_end_date) : null;
       const daysUntilExpiry = endDate ? Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
       
-      const isActive = latestProfile.plan_type === 'pro' && latestProfile.payment_status === 'active';
+      const isActive = latestProfile.plan_type === 'pro' && ((latestProfile as any).payment_status === 'active' || !(latestProfile as any).payment_status);
       const isExpired = endDate ? now > endDate : false;
       const isInGracePeriod = latestProfile.plan_type === 'pro' && isExpired && daysUntilExpiry > -7; // 7-day grace period
 
@@ -55,8 +55,8 @@ export const useSubscriptionGuard = () => {
         isExpired,
         isInGracePeriod,
         daysUntilExpiry,
-        subscriptionEndDate: latestProfile.subscription_end_date,
-        paymentStatus: latestProfile.payment_status || 'unknown'
+        subscriptionEndDate: (latestProfile as any).subscription_end_date || null,
+        paymentStatus: (latestProfile as any).payment_status || 'unknown'
       });
 
       // Show warnings for grace period users

@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, plan_type, daily_usage, last_usage_reset, subscription_end_date, payment_status')
+        .select('*')
         .eq('user_id', userId)
         .single();
 
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      // Map data to include default values for new fields
+      // Map data to include default values for new fields that might not exist yet
       const profileData: UserProfile = {
         id: data.id,
         user_id: data.user_id,
@@ -49,8 +49,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         plan_type: data.plan_type,
         daily_usage: data.daily_usage,
         last_usage_reset: data.last_usage_reset,
-        subscription_end_date: data.subscription_end_date || null,
-        payment_status: data.payment_status || 'unknown'
+        subscription_end_date: (data as any).subscription_end_date || null,
+        payment_status: (data as any).payment_status || 'unknown'
       };
 
       setProfile(profileData);

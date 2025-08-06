@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SubscriptionGuard } from "@/components/SubscriptionGuard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -151,8 +152,9 @@ Pastikan analisis i'rab mencakup setiap kata dengan detail posisi gramatikal, ta
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <SubscriptionGuard requiredPlan="pro" showGracePeriodWarning={true}>
+      <div className="min-h-screen bg-background">
+        <Navbar />
       
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -449,8 +451,9 @@ Pastikan analisis i'rab mencakup setiap kata dengan detail posisi gramatikal, ta
         </div>
       </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </SubscriptionGuard>
   );
 };
 
