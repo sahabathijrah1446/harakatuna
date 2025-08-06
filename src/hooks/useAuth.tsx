@@ -9,6 +9,8 @@ interface UserProfile {
   plan_type: string;
   daily_usage: number;
   last_usage_reset: string;
+  subscription_end_date: string | null;
+  payment_status: string;
 }
 
 interface AuthContextType {
@@ -30,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, user_id, display_name, plan_type, daily_usage, last_usage_reset, subscription_end_date, payment_status')
         .eq('user_id', userId)
         .single();
 
@@ -39,7 +41,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
       }
 
-      setProfile(data);
+      // Map data to include default values for new fields
+      const profileData: UserProfile = {
+        id: data.id,
+        user_id: data.user_id,
+        display_name: data.display_name,
+        plan_type: data.plan_type,
+        daily_usage: data.daily_usage,
+        last_usage_reset: data.last_usage_reset,
+        subscription_end_date: data.subscription_end_date || null,
+        payment_status: data.payment_status || 'unknown'
+      };
+
+      setProfile(profileData);
     } catch (error) {
       console.error('Profile fetch error:', error);
     }
