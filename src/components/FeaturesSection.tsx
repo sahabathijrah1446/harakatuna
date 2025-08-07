@@ -56,15 +56,15 @@ const FeaturesSection = () => {
         </div>
         
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
           {features.map((feature, index) => (
             <Card 
               key={index} 
-              className="group border-border hover:border-primary/30 shadow-soft hover:shadow-medium transition-smooth transform hover:-translate-y-1"
+              className="group border-border hover:border-primary/30 shadow-soft hover:shadow-medium transition-smooth transform hover:-translate-y-1 w-full max-w-sm"
             >
-              <CardContent className="p-6">
+              <CardContent className="p-6 text-center">
                 <div className="mb-4">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${feature.gradient} shadow-soft flex items-center justify-center text-2xl mb-4 group-hover:shadow-glow transition-smooth`}>
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${feature.gradient} shadow-soft flex items-center justify-center text-2xl mb-4 group-hover:shadow-glow transition-smooth mx-auto`}>
                     {feature.icon}
                   </div>
                   <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-smooth">
