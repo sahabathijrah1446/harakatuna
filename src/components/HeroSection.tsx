@@ -27,7 +27,7 @@ const HeroSection = () => {
               Lebih Mudah & Bermakna
             </h1>
             
-            <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl text-center">
+            <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl text-center mx-auto">
               Teknologi AI terdepan membantu Anda membaca teks Arab dengan harakat otomatis, 
               transliterasi yang akurat, terjemahan bahasa Indonesia, dan penjelasan Nahwu & Sharaf.
             </p>
