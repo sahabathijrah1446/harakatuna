@@ -54,23 +54,24 @@ const Navbar = () => {
           </div>
           
           {/* Action Buttons */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-6">
             {user ? (
               <>
                 <span className="text-sm text-muted-foreground">
                   Halo, {profile?.display_name || user.email}
                 </span>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/dashboard">Dashboard</Link>
-                </Button>
-                {profile?.plan_type === 'free' && (
-                  <Button variant="hero" size="sm" asChild>
-                    <Link to="/pro">Upgrade Pro</Link>
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={signOut}>
+                <Link 
+                  to="/dashboard" 
+                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-smooth"
+                >
+                  Dashboard
+                </Link>
+                <button 
+                  onClick={signOut}
+                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-smooth"
+                >
                   Keluar
-                </Button>
+                </button>
               </>
             ) : (
               <>
