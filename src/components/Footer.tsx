@@ -18,7 +18,7 @@ const Footer = () => {
               dengan lebih mudah melalui teknologi AI terdepan.
             </p>
             <p className="text-sm text-background/60">
-              Dibuat dengan ❤️ oleh Daril & Cha Cha
+              Dibuat dengan ❤️ oleh Namsantech
             </p>
           </div>
           
